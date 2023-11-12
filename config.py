@@ -47,4 +47,8 @@ def special_instructions(role):
     ]
 
     if role == "miao":
+<<<<<<< HEAD
         return miao
+=======
+        return miao
+>>>>>>> origin/main
