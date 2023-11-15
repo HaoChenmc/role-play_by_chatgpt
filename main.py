@@ -1,6 +1,6 @@
 from config import special_instructions
 from chat_api import get_model_response
-
+from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv, find_dotenv
 import os
 
@@ -26,6 +26,7 @@ if __name__ == '__main__':
     new_role = os.environ.get("NEW_ROLE")
     model = os.environ.get("MODEL")
     role = os.environ.get("ROLE")
+    web = os.environ.get("WEB")
 
     # the default conversation
     conversation_history = special_instructions("default")
@@ -41,9 +42,30 @@ if __name__ == '__main__':
     # print(conversation_history)
 
     # call function of chat_api.
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() == 'exit':
-            break  # if the user input "exit", break.
-        response = get_model_response(conversation_history, user_input, model)
-        print("GPT:", response)
+    if web == '0':
+        while True:
+            user_input = input("You: ")
+            if user_input.lower() == 'exit':
+                break  # if the user input "exit", break.
+            response = get_model_response(conversation_history, user_input, model)
+            print("GPT:", response)
+    else:
+
+        def web(web_input):
+            while True:
+                if web_input.lower() == 'exit':
+                    break  # if the user input "exit", break.
+                response = get_model_response(conversation_history, web_input, model)
+                return response
+
+
+        app = Flask(__name__, static_folder='web', static_url_path='/web/')
+        @app.route('/')
+        def index():
+            return app.send_static_file('index.html')
+        @app.route('/send_message', methods=['POST'])
+        def send_message():
+            user_input = request.json['user_input']
+            model_reply = web(user_input)
+            return jsonify({'model_reply': model_reply})
+        app.run(debug=False, port=7120)
